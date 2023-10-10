@@ -1,10 +1,16 @@
 import pygame
 import os
 
-MAP_PATH = os.path.join(os.path.dirname(__file__), "..", "assets", "data")
 IMAGE_PATH = os.path.join(os.path.dirname(__file__), "..", "assets", "images")
+SOUND_PATH = os.path.join(os.path.dirname(__file__), "..", "assets", "sounds")
+
+POPULATION_SIZE = 100
+EVOLATION_SPEED = 3
 
 testing_single_player = False
+replaying_best_player = False
+
+current_showing_level_no = 0
 
 FPS = 60
 WIDTH = 1200
@@ -40,5 +46,3 @@ PLAYER_BUMP_IMAGE = pygame.image.load(os.path.join(IMAGE_PATH, "poses", "bump.pn
 PLAYER_JUMP_IMAGE = pygame.image.load(os.path.join(IMAGE_PATH, "poses", "jump.png"))
 PLAYER_IDLE_IMAGE = pygame.image.load(os.path.join(IMAGE_PATH, "poses", "idle.png"))
 PLAYER_FALL_IMAGE = pygame.image.load(os.path.join(IMAGE_PATH, "poses", "fall.png"))
-
-
