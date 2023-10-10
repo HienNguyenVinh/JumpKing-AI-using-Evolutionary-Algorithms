@@ -1,5 +1,4 @@
 import pygame
-screen = pygame.display.set_mode((800, 600))
 
 class Coin:
     def __init__(self, x, y, type="reward"):
@@ -10,14 +9,13 @@ class Coin:
         self.type = type
 
     def collides_with_player(self, player_to_check):
-        player_mid_point = player_to_check.current_pos.copy()
-        player_mid_point.x += player_to_check.width / 2
-        player_mid_point.y += player_to_check.height / 2
-        if ((player_mid_point.x - self.x) ** 2 + (
-                player_mid_point.y - self.y) ** 2) ** 0.5 < self.radius + player_to_check.width / 2:
+        player_mid_point_x = player_to_check.x + player_to_check.w // 2
+        player_mid_point_y = player_to_check.y + player_to_check.h // 2
+
+        if ((player_mid_point_x - self.x) ** 2 + (
+                player_mid_point_y - self.y) ** 2) ** 0.5 < self.radius + player_to_check.w // 2:
             return True
         return False
 
-    def show(self):
-        pygame.draw.circle(screen, (255, 150, 0) if self.type == "reward" else (0, 200, 0, 100), (self.x, self.y), self.radius * 2)
-
+    def Draw(self, window):
+        pygame.draw.circle(window, (255, 150, 0) if self.type == "reward" else (0, 200, 0, 100), (self.x, self.y), self.radius * 2)
