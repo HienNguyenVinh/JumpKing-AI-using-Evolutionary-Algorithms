@@ -2,7 +2,6 @@ import math
 
 from .settings import *
 from .vector import *
-from .line import *
 from .levelSetupFunction import *
 from .brain import *
 
@@ -140,9 +139,25 @@ class Player:
         self.currentLevelNo = 0
         self.best_height_reached = 0
         self.best_level_reached = 0
+
+        self.isOnGround = False
+        self.isRunning = False
+        self.isSliding = False
+        self.isSlidingLeft = False
+        self.hasBumped = False
+        self.hasFallen = False
+
+        self.facingRight = True
+
+        self.jumpHeld = False
+        self.leftHeld = False
+        self.rightHeld = False
+
+        self.max_collisions_checks = 20
+        self.current_number_of_collision_checks = 0
+
         self.best_level_reached_on_action_no = 0
         self.fitness = 0
-        self.num_of_coins_picked_up = 0
         self.felt_to_previous_level = False
         self.has_finished_actions = False
         self.felt_on_action_no = 0
@@ -159,21 +174,9 @@ class Player:
         self.ai_action_timer = 0
         self.ai_action_max_time = 0
 
-        self.isOnGround = True
-        self.isRunning = False
-        self.isSliding = False
-        self.isSlidingLeft = False
-        self.hasBumped = False
-        self.hasFallen = False
-
-        self.facingRight = True
-
-        self.jumpHeld = False
-        self.leftHeld = False
-        self.rightHeld = False
-
-        self.max_collisions_checks = 20
-        self.current_number_of_collision_checks = 0
+        self.num_of_coins_picked_up = 0
+        self.coins_picked_up_idx = []
+        self.progression_coin_picked_up = False
 
     def clone(self):
         clone = Player()
@@ -181,6 +184,46 @@ class Player:
         clone.player_state_of_best_level = self.player_state_of_best_level.clone()
         clone.brain.parent_reached_best_level_at_action_no = self.best_level_reached_on_action_no
         return clone
+
+    def resetPlayer(self):
+        self.x = WIDTH / 2
+        self.y = HEIGHT / 2
+        self.velx = 0
+        self.vely = 0
+        self.isOnGround = False
+
+        self.jumpTimer = 0
+        self.jumpHeld = False
+        self.leftHeld = False
+        self.rightHeld = False
+
+        self.isRunning = False
+        self.isSliding = False
+        self.isSlidingLeft = False
+        self.hasBumped = False
+        self.facingRight = True
+
+        self.currentLevelNo = 0
+
+        self.hasFallen = False
+        self.jumpStartHeight = 0
+
+        self.ai_action_timer = 0
+        self.ai_action_max_time = 0
+        self.is_waiting_to_start_action = False
+        self.action_started = False
+
+        self.brain.current_instruction_number = 0
+        self.current_action = None
+
+        self.players_dead = False
+        self.pvelx = 0
+        self.pvely = 0
+        self.best_height_reached = 0
+        self.reached_height_at_step_no = 0
+
+        self.fitness = 0
+        self.has_finished_actions = False
 
     def isPlayerOnGround(self, currentLines):
         self.y += 1
@@ -384,6 +427,9 @@ class Player:
             else:
                 self.vely = -self.vely/2
                 self.y = line.y1
+                if testing_single_player:
+                    playSound('bump')
+
         elif line.isVertical:
             if self.isMovingRight():
                 self.x = line.x1 - self.w
@@ -397,6 +443,8 @@ class Player:
             self.velx = -self.velx/2
             if not self.isOnGround:
                 self.hasBumped = True
+                if testing_single_player:
+                    playSound('bump')
         else:
             self.isSliding = True
             self.hasBumped = True
@@ -512,6 +560,8 @@ class Player:
         self.isOnGround = False
         self.jumpTimer = 0
         self.jumpStartHeight = (HEIGHT - self.y) + HEIGHT * self.currentLevelNo
+        if testing_single_player:
+            playSound('jump')
 
 
     def Land(self):
@@ -531,11 +581,23 @@ class Player:
                 self.best_level_reached_on_action_no = self.brain.current_instruction_number
                 self.get_new_player_state_at_end_of_update = True
 
+                # setup coins
+                self.num_of_coins_picked_up = 0
+                self.progression_coin_picked_up = False
+                if not MAP_LINES[self.currentLevelNo].has_progression_coins:
+                    self.progression_coin_picked_up = True
+                self.coins_picked_up_idx = []
 
         if not self.has_finished_actions and self.currentLevelNo < self.best_level_reached:
             self.felt_to_previous_level = True
             self.felt_on_action_no = self.brain.current_instruction_number
             self.has_finished_actions = True
+
+        if testing_single_player:
+            if self.hasFallen:
+                playSound('fall')
+            else:
+                playSound('land')
 
 
     def UpdatePlayerSlide(self, lines):
@@ -675,9 +737,38 @@ class Player:
                 self.endCurrentAction()
                 self.action_started = False
 
+    def checkForCoinCollisions(self):
+        if self.currentLevelNo < self.best_level_reached:
+            return
+        current_lv = MAP_LINES[self.currentLevelNo]
+        for i in range(len(current_lv.coins)):
+            if i not in self.coins_picked_up_idx:
+                if current_lv.coins[i].collides_with_player(self):
+                    if current_lv.coins[i].type == 'reward':
+                        if self.isOnGround:
+                            self.coins_picked_up_idx.append(i)
+                            self.num_of_coins_picked_up += 1
+                            print("Got a coin")
+                    else:
+                        self.coins_picked_up_idx.append(i)
+                        self.num_of_coins_picked_up += 0
+                        self.progression_coin_picked_up = True
+                        print('Got a progress coin')
+
+
     def Draw(self, window):
         if self.players_dead:
             return
+
+        if not replaying_best_player:
+            if self.currentLevelNo == current_showing_level_no - 1:
+                if self.y < self.h:
+                    self.y = self.y + self.h
+                else:
+                    return
+
+        # self.x += self.x
+        # self.y += self.y
 
         img = self.GetSpriteToDraw()
         imgW, imgH = img.get_size()
