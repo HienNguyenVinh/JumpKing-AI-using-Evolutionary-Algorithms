@@ -1,6 +1,5 @@
-import random
-
 from .player import *
+from .settings import *
 
 class Population:
     def __init__(self, population_size):
@@ -10,13 +9,17 @@ class Population:
 
         self.best_player = None
         self.current_highest_player = None
-        self.current_highest_level_no = 0
+        self.current_showing_level_no = 0
         self.fitness_sum = 0
         self.best_height = 0
         self.current_best_level_reached = 0
         self.new_level_reached = False
         self.reached_best_level_at_action_no = 0
         self.clone_of_best_player_from_pre_generation = None
+
+    def resetAllPlayers(self):
+        for player in self.players:
+            player.resetPlayer()
 
     def Update(self):
         for i in range(self.size):
@@ -43,20 +46,6 @@ class Population:
         for player in self.players:
             if player.getGlobalHeight() > self.current_highest_player.getGlobalHeight():
                 self.current_highest_player = player
-
-
-
-    def Draw(self, window):
-        self.setCurrentHighestPlayer()
-        highest_level_no = self.current_highest_player.currentLevelNo
-
-        if self.current_highest_player.currentLevelNo > self.current_highest_player.best_level_reached:
-            highest_level_no -= 1
-        self.current_highest_level_no = highest_level_no
-
-        for player in self.players:
-            if player.currentLevelNo >= highest_level_no - 1 and player.currentLevelNo <= highest_level_no:
-                player.Draw(window)
 
 
     def calcFitnessSum(self):
@@ -105,3 +94,20 @@ class Population:
             if not player.has_finished_actions:
                 return False
         return True
+
+    def Draw(self, window):
+        self.setCurrentHighestPlayer()
+        highest_level_no = self.current_highest_player.currentLevelNo
+
+        if self.current_highest_player.currentLevelNo > self.current_highest_player.best_level_reached:
+            highest_level_no -= 1
+
+        current_showing_level_no = highest_level_no
+
+        DrawMapLevel(window, current_showing_level_no)
+
+        for player in self.players:
+            # if player.currentLevelNo >= highest_level_no - 1 and player.currentLevelNo <= highest_level_no:
+            #     player.Draw(window)
+            if player.currentLevelNo == highest_level_no:
+                player.Draw(window)
