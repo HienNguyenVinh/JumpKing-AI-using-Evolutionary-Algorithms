@@ -1,9 +1,9 @@
 import math
 
-from .settings import *
 from .vector import *
 from .levelSetupFunction import *
 from .brain import *
+from .settings import *
 
 def euclidean(x1, y1, x2, y2):
     return ( (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) )**(1/2)
@@ -18,15 +18,6 @@ def numberInRange(a, b1, b2):
     ) or (
         b2 <= a and a <= b1
     )
-
-def AreLinesColliding(a1, b1, a2, b2):
-    uA = ((b2[0] - a2[0]) * (a1[1] - a2[1]) - (b2[1] - a2[1]) * (a1[0] - a2[0])) / ((b2[1] - a2[1]) * (b1[0] - a1[0]) - (b2[0] - a2[0]) * (b1[1] - a1[1]))
-    uB = ((b1[0] - a1[0]) * (a1[1] - a2[1]) - (b1[1] - a1[1]) * (a1[0] - a2[0])) / ((b2[1] - a2[1]) * (b1[0] - a1[0]) - (b2[0] - a2[0]) * (b1[1] - a1[1]))
-    if(uA >= 0 and uA <= 1 and uB >= 0 and uB <= 1):
-        intersectionX = a1[0] + (uA * (b1[0] - a1[0]))
-        intersectionY = a1[1] + (uA * (b1[1] - a1[1]))
-        return [True, intersectionX, intersectionY]
-    return [False, 0, 0]
 
 
 class PlayerState:
@@ -55,25 +46,10 @@ class PlayerState:
         self.is_waiting_to_start_action = False
         self.action_started = False
 
-    def clone(self):
-        state_clone = PlayerState()
-        state_clone.x = self.x
-        state_clone.y = self.y
-        state_clone.velx = self.velx
-        state_clone.vely = self.vely
-        state_clone.isOnGround = self.isOnGround
-
-        state_clone.best_height_reached = self.best_height_reached
-        state_clone.best_level_reached = self.best_level_reached
-        state_clone.reached_height_at_step_no = self.reached_height_at_step_no
-        state_clone.best_level_reached_on_action_no = self.best_level_reached_on_action_no
-        state_clone.brain_action_number = self.brain_action_number
-
-        state_clone.currentLevelNo = self.currentLevelNo
-        state_clone.jumpStartHeight = self.jumpStartHeight
-        state_clone.facingRight = self.facingRight
-
-        return state_clone
+        self.blizzard_force = 0
+        self.blizzard_force_acceleration_direction = 1
+        self.max_blizzard_force_timer = 0
+        self.snow_image_position = 0
 
     def getStateFromPlayer(self, player):
         self.x = player.x
@@ -81,6 +57,11 @@ class PlayerState:
         self.velx = player.velx
         self.vely = player.vely
         self.isOnGround = player.isOnGround
+
+        self.blizzard_force = player.blizzard_force
+        self.blizzard_force_acceleration_direction = player.blizzard_force_acceleration_direction
+        self.max_blizzard_force_timer = player.max_blizzard_force_timer
+        self.snow_image_position = player.snow_image_position
 
         self.best_height_reached = player.best_height_reached
         self.best_level_reached = player.best_level_reached
@@ -102,6 +83,11 @@ class PlayerState:
         player.vely = self.vely
         player.isOnGround = self.isOnGround
 
+        player.blizzard_force = self.blizzard_force
+        player.blizzard_force_acceleration_direction = self.blizzard_force_acceleration_direction
+        player.max_blizzard_force_timer = self.max_blizzard_force_timer
+        player.snow_image_position = self.snow_image_position
+
         player.best_height_reached = self.best_height_reached
         player.best_level_reached = self.best_level_reached
         player.reached_height_at_step_no = self.reached_height_at_step_no
@@ -111,6 +97,34 @@ class PlayerState:
         player.currentLevelNo = self.currentLevelNo
         player.jumpStartHeight = self.jumpStartHeight
         player.facingRight = self.facingRight
+
+        player.is_waiting_to_start_action = self.is_waiting_to_start_action
+        player.action_started = self.action_started
+
+    def clone(self):
+        state_clone = PlayerState()
+        state_clone.x = self.x
+        state_clone.y = self.y
+        state_clone.velx = self.velx
+        state_clone.vely = self.vely
+        state_clone.isOnGround = self.isOnGround
+
+        state_clone.blizzard_force = self.blizzard_force
+        state_clone.blizzard_force_acceleration_direction = self.blizzard_force_acceleration_direction
+        state_clone.max_blizzard_force_timer = self.max_blizzard_force_timer
+        state_clone.snow_image_position = self.snow_image_position
+
+        state_clone.best_height_reached = self.best_height_reached
+        state_clone.best_level_reached = self.best_level_reached
+        state_clone.reached_height_at_step_no = self.reached_height_at_step_no
+        state_clone.best_level_reached_on_action_no = self.best_level_reached_on_action_no
+        state_clone.brain_action_number = self.brain_action_number
+
+        state_clone.currentLevelNo = self.currentLevelNo
+        state_clone.jumpStartHeight = self.jumpStartHeight
+        state_clone.facingRight = self.facingRight
+
+        return state_clone
 
 class Player:
     runCycleIdx = 0
@@ -156,6 +170,14 @@ class Player:
         self.max_collisions_checks = 20
         self.current_number_of_collision_checks = 0
 
+        # for snow level
+        self.alreadyShowingSnow = False
+        self.blizzard_force = 0
+        self.blizzard_force_acceleration_direction = 1
+        self.max_blizzard_force_timer = 0
+        self.snow_image_position = 0
+
+        # population info
         self.best_level_reached_on_action_no = 0
         self.fitness = 0
         self.felt_to_previous_level = False
@@ -167,6 +189,7 @@ class Player:
 
         self.players_dead = False
 
+        # AI actions
         self.is_waiting_to_start_action = False
         self.action_started = False
         self.brain = Brain(starting_player_actions)
@@ -174,6 +197,7 @@ class Player:
         self.ai_action_timer = 0
         self.ai_action_max_time = 0
 
+        # coins info
         self.num_of_coins_picked_up = 0
         self.coins_picked_up_idx = []
         self.progression_coin_picked_up = False
@@ -196,6 +220,11 @@ class Player:
         self.jumpHeld = False
         self.leftHeld = False
         self.rightHeld = False
+
+        self.blizzard_force = 0
+        self.blizzard_force_acceleration_direction = 1
+        self.max_blizzard_force_timer = 0
+        self.snow_image_position = 0
 
         self.isRunning = False
         self.isSliding = False
@@ -321,6 +350,8 @@ class Player:
 
 
     def GetPriorityCollision(self, collidedLines):
+        # if we are going up and then we hit a verticle and a horizontal and if the midpoint of the vert is lower then
+        # we need to do the verticle one first because that should be blocking the horizontal one
         if len(collidedLines) == 2:
             vert = None
             hori = None
@@ -387,13 +418,13 @@ class Player:
                     cB = line.diagonalCollisionInfo.collidePlayerB
                     cL = line.diagonalCollisionInfo.collidePlayerL
                     cR = line.diagonalCollisionInfo.collidePlayerR
-                    if   cT and cL: 
+                    if   cT and cL:
                         playerCollidedCorner = Point(self.x       , self.y       )
-                    elif cT and cR: 
+                    elif cT and cR:
                         playerCollidedCorner = Point(self.x+self.w, self.y       )
-                    elif cB and cL: 
+                    elif cB and cL:
                         playerCollidedCorner = Point(self.x       , self.y+self.h)
-                    elif cB and cR: 
+                    elif cB and cR:
                         playerCollidedCorner = Point(self.x+self.w, self.y+self.h)
                     else:
                         pccX = self.x+(int(self.isMovingRight())*self.w)
@@ -418,6 +449,9 @@ class Player:
         potentialLanding = False
         if line.isHorizontal:
             if self.isMovingDown():
+                # so the player has potentially landed
+                #correct the position first then player has landed
+
                 self.y = line.y1 - self.h
                 if len(collidedLines) > 1:
                     potentialLanding = True
@@ -425,10 +459,9 @@ class Player:
                 else:
                     self.Land()
             else:
+                # if moving up then we've hit a roof and we bounce off
                 self.vely = -self.vely/2
                 self.y = line.y1
-                if testing_single_player:
-                    playSound('bump')
 
         elif line.isVertical:
             if self.isMovingRight():
@@ -436,6 +469,9 @@ class Player:
             elif self.isMovingLeft():
                 self.x = line.x1
             else:
+                # this means we've hit a wall but we arent moving left or right
+                # meaning we prioritised the floor first which stopped our velocity
+                # so we need a variable to store the speed we had before any transions were made
                 if self.pvelx > 0:
                     self.x = line.x1 - self.w
                 else:
@@ -443,8 +479,6 @@ class Player:
             self.velx = -self.velx/2
             if not self.isOnGround:
                 self.hasBumped = True
-                if testing_single_player:
-                    playSound('bump')
         else:
             self.isSliding = True
             self.hasBumped = True
@@ -545,6 +579,25 @@ class Player:
         else:
             self.vely = min(self.vely + GRAVITY, TERMINAL_VELOCITY)
 
+    def ApplyBlizzardForce(self):
+        if not MAP_LINES[self.currentLevelNo].is_blizzard_level:
+            return
+
+        if abs(self.blizzard_force) >= MaxBlizzardForce:
+            self.max_blizzard_force_timer += 1
+            if self.max_blizzard_force_timer > BlizzardMaxSpeedHoldTime:
+                self.blizzard_force_acceleration_direction *= -1
+                self.max_blizzard_force_timer = 0
+
+        self.blizzard_force += self.blizzard_force_acceleration_direction * BlizzardAccelerationMagnitude
+
+        if abs(self.blizzard_force) > MaxBlizzardForce:
+            self.blizzard_force = MaxBlizzardForce * self.blizzard_force_acceleration_direction
+
+        self.snow_image_position += self.blizzard_force * BlizzardImageSpeedMultiplier
+
+        if not self.isOnGround:
+            self.velx += self.blizzard_force
 
     def Jump(self):
         if not self.isOnGround: return
@@ -560,12 +613,22 @@ class Player:
         self.isOnGround = False
         self.jumpTimer = 0
         self.jumpStartHeight = (HEIGHT - self.y) + HEIGHT * self.currentLevelNo
-        if testing_single_player:
-            playSound('jump')
 
 
     def Land(self):
+        # if moving down then weve landed
         self.isOnGround = True
+        # if were on an ice level then we slide instead
+        if MAP_LINES[self.currentLevelNo].is_ice_level:
+            self.vely = 0
+            if self.isMovingRight():
+                self.velx -= PlayerIceRunAcceleration
+            else:
+                self.velx += PlayerIceRunAcceleration
+        else:
+            self.velx = 0
+            self.vely = 0
+
         self.isSliding = False
         self.hasBumped = False
         self.hasFallen = False
@@ -579,6 +642,7 @@ class Player:
             if self.best_level_reached < self.currentLevelNo:
                 self.best_level_reached = self.currentLevelNo
                 self.best_level_reached_on_action_no = self.brain.current_instruction_number
+                self.player_state_of_best_level.getStateFromPlayer(self)
                 self.get_new_player_state_at_end_of_update = True
 
                 # setup coins
@@ -588,16 +652,13 @@ class Player:
                     self.progression_coin_picked_up = True
                 self.coins_picked_up_idx = []
 
-        if not self.has_finished_actions and self.currentLevelNo < self.best_level_reached:
+
+        # if the ai fell to a previous level then stop the actions and record when it happened
+        if self.currentLevelNo < self.best_level_reached and not self.has_finished_actions:
             self.felt_to_previous_level = True
             self.felt_on_action_no = self.brain.current_instruction_number
             self.has_finished_actions = True
 
-        if testing_single_player:
-            if self.hasFallen:
-                playSound('fall')
-            else:
-                playSound('land')
 
 
     def UpdatePlayerSlide(self, lines):
@@ -643,17 +704,23 @@ class Player:
             self.jumpTimer += 1
 
 
-    def Update(self):
-        if self.players_dead:
-            return
+    def Update(self, single_mode):
+        if single_mode:
+            if self.players_dead:
+                return
+        else:
+            if self.players_dead or self.has_finished_actions:
+                return
+
 
         currentLines = MAP_LINES[self.currentLevelNo].lines
 
-        if not self.has_finished_actions and not testing_single_player:
+        if not self.has_finished_actions and not single_mode:
             self.updateAIAction()
 
         self.UpdatePlayerSlide(currentLines)
         self.ApplyGravity()
+        self.ApplyBlizzardForce()
         self.UpdatePlayerRun(currentLines)
         self.UpdatePlayerJump()
 
@@ -667,6 +734,7 @@ class Player:
         self.CheckCollisions(currentLines)
         self.UpdateJumpTimer()
         self.CheckForLevelChange()
+        self.checkForCoinCollisions()
 
         if self.get_new_player_state_at_end_of_update:
             if self.currentLevelNo != 37:
@@ -674,23 +742,11 @@ class Player:
             self.get_new_player_state_at_end_of_update = False
 
 
-
-
-    def GetSpriteToDraw(self):
-        if self.jumpHeld and self.isOnGround: return PLAYER_SQUAT_IMAGE
-        if self.hasFallen: return PLAYER_FALLEN_IMAGE
-        if self.hasBumped: return PLAYER_BUMP_IMAGE
-        if self.vely < 0: return PLAYER_JUMP_IMAGE
-        if self.isRunning:
-            self.runCycleIdx = (self.runCycleIdx+1)%len(self.runCycle)
-            return self.runCycle[self.runCycleIdx]
-        if self.isOnGround: return PLAYER_IDLE_IMAGE
-        return PLAYER_FALL_IMAGE
-
     def getGlobalHeight(self):
         return (HEIGHT - self.y) + HEIGHT * self.currentLevelNo
 
     def calcFitness(self):
+        # current best fitness max just including height is 640,000, getting a coin has to be the most important thing so
         coin_value = 500000
         score_height = self.best_height_reached - (HEIGHT * self.best_level_reached)
         self.fitness = score_height ** 2 + coin_value * self.num_of_coins_picked_up
@@ -755,22 +811,44 @@ class Player:
                         self.progression_coin_picked_up = True
                         print('Got a progress coin')
 
+    def GetSpriteToDraw(self):
+        if self.jumpHeld and self.isOnGround: return PLAYER_SQUAT_IMAGE
+        if self.hasFallen: return PLAYER_FALLEN_IMAGE
+        if self.hasBumped: return PLAYER_BUMP_IMAGE
+        if self.vely < 0: return PLAYER_JUMP_IMAGE
+        if self.isRunning:
+            self.runCycleIdx = (self.runCycleIdx+1)%len(self.runCycle)
+            return self.runCycle[self.runCycleIdx]
+        if self.isOnGround: return PLAYER_IDLE_IMAGE
+        return PLAYER_FALL_IMAGE
 
-    def Draw(self, window):
+
+    def Draw(self, window, single_mode):
         if self.players_dead:
             return
 
-        if not replaying_best_player:
+        if not single_mode:
             if self.currentLevelNo == current_showing_level_no - 1:
                 if self.y < self.h:
                     self.y = self.y + self.h
                 else:
                     return
 
-        # self.x += self.x
-        # self.y += self.y
-
         img = self.GetSpriteToDraw()
         imgW, imgH = img.get_size()
         img = pygame.transform.flip(img, not self.facingRight, False)
         window.blit(img, ( self.x+(self.w/2)-(imgW/2) , self.y+self.h-imgH))
+
+        # show snow
+        if MAP_LINES[self.currentLevelNo].is_blizzard_level and (not self.alreadyShowingSnow or single_mode):
+            # window.blit(SnowImage, (0, 0))
+
+            snowDrawPosition = self.snow_image_position
+            while snowDrawPosition <= 0:
+                snowDrawPosition += WIDTH
+            snowDrawPosition = snowDrawPosition % WIDTH
+
+            window.blit(SnowImage, (snowDrawPosition, 0))
+            window.blit(SnowImage, (snowDrawPosition - WIDTH, 0))
+
+            self.alreadyShowingSnow = True
