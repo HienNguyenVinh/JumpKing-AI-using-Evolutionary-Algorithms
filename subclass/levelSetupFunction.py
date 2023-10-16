@@ -6,8 +6,6 @@ import json
 def DrawMapLevel(window, levelIdx):
     map = MAP_LINES[levelIdx]
     window.blit(map.bg, (0, 0))
-    # for line in map.lines:
-    #     line.Draw(window)
 
 
 class Level:
@@ -19,8 +17,6 @@ class Level:
 
         self.coins = []
         self.has_progression_coins = False
-
-
 
 
 class MapLoader:
@@ -40,13 +36,14 @@ class MapLoader:
                 lines = lines
             ))
             # print(idx)
-            if  25 < int(idx) < 33:
+            if  25 <= int(idx) <= 31:
                 levels[int(idx) - 1].is_blizzard_level = True
-            if 36 < int(idx) < 40:
+            if 36 <= int(idx) <= 38:
                 levels[int(idx) - 1].is_ice_level = True
         return levels
 
 MAP_LINES = MapLoader("subclass/map.json").loadLevels()
+
 
 MAP_LINES[4].coins.append(Coin(143, 160))
 MAP_LINES[5].coins.append(Coin(801, 140))
