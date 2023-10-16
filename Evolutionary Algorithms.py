@@ -1,9 +1,13 @@
+import time
+
 from subclass import *
 import pygame
 
 pygame.init()
 
 clock = pygame.time.Clock()
+font = pygame.font.Font(None, 32)
+
 class JumpKing:
     # FPS = pygame.time.Clock().tick
 
@@ -11,10 +15,10 @@ class JumpKing:
         self.window = pygame.display.set_mode((WIDTH, HEIGHT))
         self.levels = MAP_LINES
 
-        self.testing_single_player = testing_single_player
-        self.replaying_best_player = replaying_best_player
+        self.testing_single_player = True
+        self.replaying_best_player = False
         self.clone_of_best_player = None
-        self.evolation_speed = EVOLATION_SPEED
+        self.evolation_speed = 1
 
         self.player = Player()
         self.player.currentLevelNo = 0
@@ -29,14 +33,19 @@ class JumpKing:
         self.player.leftHeld = pressedKeys[pygame.K_LEFT]
         self.player.rightHeld = pressedKeys[pygame.K_RIGHT]
         self.player.jumpHeld = pressedKeys[pygame.K_SPACE]
-        self.player.Update()
-        self.player.Draw(self.window)
+        self.player.Update(self.testing_single_player)
 
     def DrawPlayer(self):
         self.window.blit(self.levels[self.player.currentLevelNo].bg, (0, 0))
+        self.player.Draw(self.window, self.testing_single_player)
+
+        level_text = font.render(f'Level: {self.player.currentLevelNo + 1}', True, text_color)
+        fps_text = font.render(f'FPS: {round(clock.get_fps())}', True, text_color)
+        self.window.blit(fps_text, (WIDTH - 160, 10))
+        self.window.blit(level_text, (560, 15))
         # for coin in MAP_LINES[self.player.currentLevelNo].coins:
         #     coin.Draw(self.window)
-        self.UpdatePlayer()
+
 
     def UpdatePlayersInPopulation(self):
         if self.population.allPlayerFinished():
@@ -44,11 +53,8 @@ class JumpKing:
             if self.population.gen % increase_actions_every_X_generations == 0:
                 self.population.increase_player_moves(increase_actions_by_amount)
 
-        # for i in range(evolation_speed):
-        #     self.population.Update()
-        self.population.Update()
-        self.population.Update()
-        self.population.Update()
+        for i in range(self.evolation_speed):
+            self.population.Update()
 
     def DrawPopulation(self):
         self.population.Draw(self.window)
@@ -56,18 +62,19 @@ class JumpKing:
         #     coin.Draw(self.window)
 
     def showPopulationInfo(self):
-        font = pygame.font.Font(None, 32)
-        text_color = (255, 255, 255)
 
         fps_text = font.render(f'FPS: {round(clock.get_fps())}', True, text_color)
         gen_text = font.render(f'Gen: {self.population.gen}', True, text_color)
         moves_text = font.render(f'Moves: {len(self.population.players[0].brain.instructions)}', True, text_color)
         height_text = font.render(f'Best Height: {self.population.best_height}', True, text_color)
+        evolution_speed_text = font.render(f'Evolution speed: {self.evolation_speed}', True, text_color)
 
         self.window.blit(fps_text, (WIDTH - 160, 10))
         self.window.blit(gen_text, (30, 10))
         self.window.blit(moves_text, (200, 10))
         self.window.blit(height_text, (400, 10))
+        self.window.blit(evolution_speed_text, (650, 10))
+
 
     def run(self):
         while (True):
@@ -94,9 +101,12 @@ class JumpKing:
                             self.testing_single_player = True
 
                     if e.key == pygame.K_b:
-                        self.replaying_best_player = True
-                        self.clone_of_best_player = self.population.clone_of_best_player_from_pre_generation
-                        self.evolation_speed = 1
+                        if not self.testing_single_player:
+                            self.replaying_best_player = True
+                            self.clone_of_best_player = self.population.clone_of_best_player_from_pre_generation
+                            self.evolation_speed = 1
+                        else:
+                            print('No player had trained')
 
                     if e.key == pygame.K_r:
                         if self.testing_single_player:
@@ -105,24 +115,29 @@ class JumpKing:
                             self.population.resetAllPlayers()
 
                     if e.key == pygame.K_n:
-                        self.player.currentLevelNo += 1
+                        # self.player.currentLevelNo = 42
+                        if self.player.currentLevelNo < 42:
+                            self.player.currentLevelNo += 1
+
 
                     if e.key == pygame.K_i:
                         print(f"Gen: {self.population.gen}")
                         print(f'Moves: {len(self.population.players[0].brain.instructions)}')
                         print(f"Best height: {self.population.best_height}")
                         print(f"Best level: {self.population.current_best_level_reached}")
-
-
             if self.testing_single_player:
                 self.UpdatePlayer()
                 self.DrawPlayer()
+                if self.player.currentLevelNo == 42 and self.player.x >= 920 and self.player.y < 300:
+                    self.player.y = 350
+
             elif self.replaying_best_player:
                 if not self.clone_of_best_player.has_finished_actions:
                     for _ in range(self.evolation_speed):
-                        self.clone_of_best_player.Update()
+                        self.clone_of_best_player.Update(self.testing_single_player)
                     self.window.blit(self.levels[self.clone_of_best_player.currentLevelNo].bg, (0, 0))
-                    self.clone_of_best_player.Draw(self.window)
+                    self.clone_of_best_player.alreadyShowingSnow = False
+                    self.clone_of_best_player.Draw(self.window, self.replaying_best_player)
                 else:
                     self.replaying_best_player = False
             else:
