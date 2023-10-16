@@ -1,5 +1,6 @@
 import pygame
 
+# Help the AI learn better
 class Coin:
     def __init__(self, x, y, type="reward"):
         self.levelNo = 0
@@ -12,8 +13,7 @@ class Coin:
         player_mid_point_x = player_to_check.x + player_to_check.w // 2
         player_mid_point_y = player_to_check.y + player_to_check.h // 2
 
-        if ((player_mid_point_x - self.x) ** 2 + (
-                player_mid_point_y - self.y) ** 2) ** 0.5 < self.radius + player_to_check.w // 2:
+        if ((player_mid_point_x - self.x) ** 2 + (player_mid_point_y - self.y) ** 2) ** 0.5 < self.radius + player_to_check.w // 2:
             return True
         return False
 
