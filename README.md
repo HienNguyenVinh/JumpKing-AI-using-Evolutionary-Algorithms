@@ -1,5 +1,5 @@
 # JumpKing-AI-using-Evolutionary-Algorithms
-This code is based on CodeBullet's YouTube video (https://www.youtube.com/watch?v=DmQ4Dqxs0HI&t=885s&ab_channel=CodeBullet)
+This code is based on CodeBullet's YouTube video (https://www.youtube.com/watch?v=DmQ4Dqxs0HI&t=885s&ab_channel=CodeBullet) \n
 You can see how the AI learns to play.
 Run EvolutionaryAlgorithms.py to play
 ![image](https://github.com/HienNguyenVinh/JumpKing-AI-using-Evolutionary-Algorithms/assets/126568387/a6b57bf8-fa6f-4441-bb82-adedf60f66aa)
