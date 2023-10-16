@@ -19,7 +19,7 @@ chance_of_full_jump = 0.2
 class Brain:
     def __init__(self, size, randomise_instructions=True):
         self.size = size
-        self.instructions = []
+        self.instructions = []     # a list of action for AI
         self.current_instruction_number = 0
         if randomise_instructions:
             self.randomize(size)
@@ -65,13 +65,14 @@ class Brain:
                 self.instructions[i].mutate()
 
     def mutate_action_number(self, action_number):
-        action_number -= 1  # this is done because I'm a bad programmer
+        action_number -= 1
         chance_of_new_instruction = 0.2
         if random.random() < chance_of_new_instruction:
             self.instructions[action_number] = self.get_random_action()
         else:
             self.instructions[action_number].mutate()
 
+    # increase numbers of actions every 10 genes
     def increase_moves(self, increase_moves_by):
         for i in range(increase_moves_by):
             self.instructions.append(self.get_random_action())
