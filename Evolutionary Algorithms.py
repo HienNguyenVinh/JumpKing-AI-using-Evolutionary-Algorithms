@@ -14,6 +14,7 @@ class JumpKing:
     def __init__(self):
         self.window = pygame.display.set_mode((WIDTH, HEIGHT))
         self.levels = MAP_LINES
+        self.show_lines = False
 
         self.testing_single_player = True
         self.replaying_best_player = False
@@ -68,12 +69,14 @@ class JumpKing:
         moves_text = font.render(f'Moves: {len(self.population.players[0].brain.instructions)}', True, text_color)
         height_text = font.render(f'Best Height: {self.population.best_height}', True, text_color)
         evolution_speed_text = font.render(f'Evolution speed: {self.evolation_speed}', True, text_color)
+        level_text = font.render(f"Level: {self.population.current_showing_level_no}", True, text_color)
 
         self.window.blit(fps_text, (WIDTH - 160, 10))
         self.window.blit(gen_text, (30, 10))
-        self.window.blit(moves_text, (200, 10))
-        self.window.blit(height_text, (400, 10))
-        self.window.blit(evolution_speed_text, (650, 10))
+        self.window.blit(moves_text, (150, 10))
+        self.window.blit(height_text, (300, 10))
+        self.window.blit(level_text, (500, 10))
+        self.window.blit(evolution_speed_text, (700, 10))
 
 
     def run(self):
@@ -112,13 +115,18 @@ class JumpKing:
                         if self.testing_single_player:
                             self.player.resetPlayer()
                         else:
-                            self.population.resetAllPlayers()
+                            # self.population.resetAllPlayers()
+                            self.population = Population(POPULATION_SIZE)
+                            for player in self.population.players:
+                                player.currentLevelNo = 0
 
                     if e.key == pygame.K_n:
                         # self.player.currentLevelNo = 42
                         if self.player.currentLevelNo < 42:
                             self.player.currentLevelNo += 1
 
+                    if e.key == pygame.K_l:
+                        self.show_lines = not self.show_lines
 
                     if e.key == pygame.K_i:
                         print(f"Gen: {self.population.gen}")
@@ -137,16 +145,21 @@ class JumpKing:
                         self.clone_of_best_player.Update(self.testing_single_player)
                     self.window.blit(self.levels[self.clone_of_best_player.currentLevelNo].bg, (0, 0))
                     self.clone_of_best_player.alreadyShowingSnow = False
+
                     self.clone_of_best_player.Draw(self.window, self.replaying_best_player)
+                    level_text = font.render(f'Level: {self.player.currentLevelNo + 1}', True, text_color)
+                    fps_text = font.render(f'FPS: {round(clock.get_fps())}', True, text_color)
+                    self.window.blit(fps_text, (WIDTH - 160, 10))
+                    self.window.blit(level_text, (560, 15))
                 else:
                     self.replaying_best_player = False
             else:
                 self.UpdatePlayersInPopulation()
                 self.DrawPopulation()
                 self.showPopulationInfo()
-
-            # for line in self.levels[self.player.currentLevelNo].lines:
-            #     line.Draw(self.window)
+            if self.show_lines:
+                for line in self.levels[self.player.currentLevelNo].lines:
+                    line.Draw(self.window)
 
             pygame.display.update()
             # self.FPS(FPS)
