@@ -840,7 +840,7 @@ class Player:
         window.blit(img, ( self.x+(self.w/2)-(imgW/2) , self.y+self.h-imgH))
 
         # show snow
-        if MAP_LINES[self.currentLevelNo].is_blizzard_level and (not self.alreadyShowingSnow or single_mode):
+        if MAP_LINES[self.currentLevelNo].is_blizzard_level and not self.alreadyShowingSnow and single_mode:
             # window.blit(SnowImage, (0, 0))
 
             snowDrawPosition = self.snow_image_position
