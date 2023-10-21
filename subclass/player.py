@@ -153,6 +153,7 @@ class Player:
         self.currentLevelNo = 0
         self.best_height_reached = 0
         self.best_level_reached = 0
+        self.is_finish = False
 
         self.isOnGround = False
         self.isRunning = False
@@ -712,6 +713,8 @@ class Player:
             if self.players_dead or self.has_finished_actions:
                 return
 
+        if self.currentLevelNo == 42 and self.x >= 920 * alpha and self.y < 300 * alpha:
+            self.is_finish = True
 
         currentLines = MAP_LINES[self.currentLevelNo].lines
 
@@ -807,7 +810,7 @@ class Player:
                             print("Got a coin")
                     else:
                         self.coins_picked_up_idx.append(i)
-                        self.num_of_coins_picked_up += 0
+                        self.num_of_coins_picked_up += 1
                         self.progression_coin_picked_up = True
                         print('Got a progress coin')
 
@@ -840,9 +843,8 @@ class Player:
         window.blit(img, ( self.x+(self.w/2)-(imgW/2) , self.y+self.h-imgH))
 
         # show snow
-        if MAP_LINES[self.currentLevelNo].is_blizzard_level and not self.alreadyShowingSnow and single_mode:
+        if MAP_LINES[self.currentLevelNo].is_blizzard_level and (not self.alreadyShowingSnow or single_mode):
             # window.blit(SnowImage, (0, 0))
-
             snowDrawPosition = self.snow_image_position
             while snowDrawPosition <= 0:
                 snowDrawPosition += WIDTH
