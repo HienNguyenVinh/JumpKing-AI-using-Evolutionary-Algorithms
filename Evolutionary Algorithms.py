@@ -6,7 +6,8 @@ import pygame
 pygame.init()
 
 clock = pygame.time.Clock()
-font = pygame.font.Font(None, 32)
+font = pygame.font.Font(None, 24)
+win_font = pygame.font.SysFont('informalroman', 50)
 
 class JumpKing:
     # FPS = pygame.time.Clock().tick
@@ -28,6 +29,8 @@ class JumpKing:
         for player in self.population.players:
             player.currentLevelNo = 0
 
+        self.is_done = False
+
 
     def UpdatePlayer(self):
         pressedKeys = pygame.key.get_pressed()
@@ -42,8 +45,8 @@ class JumpKing:
 
         level_text = font.render(f'Level: {self.player.currentLevelNo + 1}', True, text_color)
         fps_text = font.render(f'FPS: {round(clock.get_fps())}', True, text_color)
-        self.window.blit(fps_text, (WIDTH - 160, 10))
-        self.window.blit(level_text, (560, 15))
+        self.window.blit(fps_text, (WIDTH - 100, 10))
+        self.window.blit(level_text, (350, 10))
         # for coin in MAP_LINES[self.player.currentLevelNo].coins:
         #     coin.Draw(self.window)
 
@@ -67,16 +70,16 @@ class JumpKing:
         fps_text = font.render(f'FPS: {round(clock.get_fps())}', True, text_color)
         gen_text = font.render(f'Gen: {self.population.gen}', True, text_color)
         moves_text = font.render(f'Moves: {len(self.population.players[0].brain.instructions)}', True, text_color)
-        height_text = font.render(f'Best Height: {self.population.best_height}', True, text_color)
+        height_text = font.render(f'Best Height: {round(self.population.best_height)}', True, text_color)
         evolution_speed_text = font.render(f'Evolution speed: {self.evolation_speed}', True, text_color)
-        level_text = font.render(f"Level: {self.population.current_showing_level_no}", True, text_color)
+        level_text = font.render(f"Level: {self.population.current_showing_level_no + 1}", True, text_color)
 
-        self.window.blit(fps_text, (WIDTH - 160, 10))
+        self.window.blit(fps_text, (WIDTH - 100, 10))
         self.window.blit(gen_text, (30, 10))
-        self.window.blit(moves_text, (150, 10))
-        self.window.blit(height_text, (300, 10))
-        self.window.blit(level_text, (500, 10))
-        self.window.blit(evolution_speed_text, (700, 10))
+        self.window.blit(moves_text, (120, 10))
+        self.window.blit(height_text, (220, 10))
+        self.window.blit(level_text, (380, 10))
+        self.window.blit(evolution_speed_text, (450, 10))
 
 
     def run(self):
@@ -102,6 +105,7 @@ class JumpKing:
                         else:
                             self.population.resetAllPlayers()
                             self.testing_single_player = True
+                            self.player.alreadyShowingSnow = False
 
                     if e.key == pygame.K_b:
                         if not self.testing_single_player:
@@ -121,9 +125,9 @@ class JumpKing:
                                 player.currentLevelNo = 0
 
                     if e.key == pygame.K_n:
-                        # self.player.currentLevelNo = 42
-                        if self.player.currentLevelNo < 42:
-                            self.player.currentLevelNo += 1
+                        self.player.currentLevelNo = 42
+                        # if self.player.currentLevelNo < 42:
+                        #     self.player.currentLevelNo += 1
 
                     if e.key == pygame.K_l:
                         self.show_lines = not self.show_lines
@@ -136,8 +140,10 @@ class JumpKing:
             if self.testing_single_player:
                 self.UpdatePlayer()
                 self.DrawPlayer()
-                if self.player.currentLevelNo == 42 and self.player.x >= 920 and self.player.y < 300:
-                    self.player.y = 350
+                if self.player.is_finish:
+                    self.is_done = True
+                    self.player.is_finish = False
+                    self.player.y = 350 * alpha
 
             elif self.replaying_best_player:
                 if not self.clone_of_best_player.has_finished_actions:
@@ -157,9 +163,27 @@ class JumpKing:
                 self.UpdatePlayersInPopulation()
                 self.DrawPopulation()
                 self.showPopulationInfo()
+
+                if self.population.best_player.is_finish:
+                    self.replaying_best_player = True
+                    break
+
+
+            # show lines in level
             if self.show_lines:
-                for line in self.levels[self.player.currentLevelNo].lines:
-                    line.Draw(self.window)
+                if self.testing_single_player:
+                    for line in self.levels[self.player.currentLevelNo].lines:
+                        line.Draw(self.window)
+                else:
+                    for line in self.levels[self.population.current_showing_level_no].lines:
+                        line.Draw(self.window)
+
+             # finish game's scene
+            if self.is_done:
+                win_text = win_font.render("You do not deserve princess", True, text_color)
+                self.window.blit(win_text, (150, HEIGHT//2 - 50))
+                if self.player.currentLevelNo < 41:
+                    self.is_done = False
 
             pygame.display.update()
             # self.FPS(FPS)
