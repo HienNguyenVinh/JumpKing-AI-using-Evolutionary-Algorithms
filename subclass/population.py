@@ -7,7 +7,7 @@ class Population:
         self.players = [Player() for _ in range(population_size)]
         self.gen = 1
 
-        self.best_player = None
+        self.best_player = self.players[0]
         self.current_highest_player = None
         self.current_showing_level_no = 0
         self.fitness_sum = 0
@@ -33,7 +33,7 @@ class Population:
                 self.resetAllPlayers()
 
     def setBestPlayer(self):
-        self.best_player = self.players[0]
+        # self.best_player = self.players[0]
         self.new_level_reached = False
 
         for player in self.players:
@@ -115,18 +115,16 @@ class Population:
 
     def Draw(self, window):
         self.setCurrentHighestPlayer()
-        highest_level_no = self.current_highest_player.currentLevelNo
+        self.current_showing_level_no = self.current_highest_player.currentLevelNo
 
         if self.current_highest_player.currentLevelNo > self.current_highest_player.best_level_reached:
-            highest_level_no -= 1
+            self.current_showing_level_no -= 1
 
-        current_showing_level_no = highest_level_no
-
-        DrawMapLevel(window, current_showing_level_no)
+        DrawMapLevel(window, self.current_showing_level_no)
 
         for player in self.players:
             # if player.currentLevelNo >= highest_level_no - 1 and player.currentLevelNo <= highest_level_no:
             #     player.Draw(window)
-            if player.currentLevelNo == highest_level_no:
-                player.alreadyShowingSnow = False
+            if player.currentLevelNo == self.current_showing_level_no:
+                player.alreadyShowingSnow = True
                 player.Draw(window, False)
