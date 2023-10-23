@@ -30,6 +30,7 @@ class JumpKing:
             player.currentLevelNo = 0
 
         self.is_done = False
+        self.ai_is_done = False
 
 
     def UpdatePlayer(self):
@@ -115,6 +116,7 @@ class JumpKing:
                         else:
                             print('No player had trained')
 
+                    # reset player and population to level 1
                     if e.key == pygame.K_r:
                         if self.testing_single_player:
                             self.player.resetPlayer()
@@ -123,11 +125,18 @@ class JumpKing:
                             self.population = Population(POPULATION_SIZE)
                             for player in self.population.players:
                                 player.currentLevelNo = 0
+                            self.ai_is_done = False
+
+                    # reset population at current show level
+                    if e.key == pygame.K_c:
+                        if not self.testing_single_player:
+                            for player in self.population.players:
+                                player.has_finished_actions = True
 
                     if e.key == pygame.K_n:
-                        self.player.currentLevelNo = 42
-                        # if self.player.currentLevelNo < 42:
-                        #     self.player.currentLevelNo += 1
+                        # self.player.currentLevelNo = 37
+                        if self.player.currentLevelNo < 42:
+                            self.player.currentLevelNo += 1
 
                     if e.key == pygame.K_l:
                         self.show_lines = not self.show_lines
@@ -153,11 +162,14 @@ class JumpKing:
                     self.clone_of_best_player.alreadyShowingSnow = False
 
                     self.clone_of_best_player.Draw(self.window, self.replaying_best_player)
-                    level_text = font.render(f'Level: {self.player.currentLevelNo + 1}', True, text_color)
+                    level_text = font.render(f'Level: {self.clone_of_best_player.currentLevelNo + 1}', True, text_color)
                     fps_text = font.render(f'FPS: {round(clock.get_fps())}', True, text_color)
                     self.window.blit(fps_text, (WIDTH - 160, 10))
                     self.window.blit(level_text, (560, 15))
+
                 else:
+                    if self.ai_is_done:
+                        continue
                     self.replaying_best_player = False
             else:
                 self.UpdatePlayersInPopulation()
@@ -166,7 +178,7 @@ class JumpKing:
 
                 if self.population.best_player.is_finish:
                     self.replaying_best_player = True
-                    break
+                    self.ai_is_done = True
 
 
             # show lines in level
