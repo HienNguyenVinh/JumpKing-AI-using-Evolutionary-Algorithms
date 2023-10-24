@@ -1,5 +1,6 @@
 from collections import namedtuple
 import pygame
+from .settings import *
 
 Point = namedtuple("Point", ["x", "y"])
 
@@ -29,8 +30,8 @@ class Line:
         return self.__str__()
 
     def __init__(self, x1, y1, x2, y2):
-        self.x1, self.y1 = x1, y1
-        self.x2, self.y2 = x2, y2
+        self.x1, self.y1 = x1 * alpha, y1 * alpha
+        self.x2, self.y2 = x2 * alpha, y2 * alpha
 
         self.isHorizontal = y1 == y2
         self.isVertical = x1 == x2
