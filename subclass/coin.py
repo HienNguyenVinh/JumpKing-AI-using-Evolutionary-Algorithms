@@ -1,12 +1,13 @@
 import pygame
+from .settings import *
 
 # Help the AI learn better
 class Coin:
     def __init__(self, x, y, type="reward"):
         self.levelNo = 0
-        self.x = x
-        self.y = y
-        self.radius = 50
+        self.x = x * alpha
+        self.y = y * alpha
+        self.radius = 50 * alpha
         self.type = type
 
     def collides_with_player(self, player_to_check):
