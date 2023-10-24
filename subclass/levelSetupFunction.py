@@ -1,3 +1,5 @@
+import pygame.transform
+
 from .line import *
 from .settings import *
 from .coin import *
@@ -32,7 +34,7 @@ class MapLoader:
             for lineData in self.data[idx]["lines"]:
                 lines.append(Line(*lineData))
             levels.append(Level(
-                bg = pygame.image.load(os.path.join(IMAGE_PATH, "bg", f"{idx}.png")),
+                bg = pygame.transform.scale(pygame.image.load(os.path.join(IMAGE_PATH, "bg", f"{idx}.png")), (WIDTH, HEIGHT)),
                 lines = lines
             ))
             # print(idx)
@@ -67,6 +69,7 @@ MAP_LINES[1].coins.append(Coin(155, 142, 'progress'))
 MAP_LINES[1].coins.append(Coin(65, 148, 'progress'))
 MAP_LINES[2].coins.append(Coin(125, 187, 'progress'))
 MAP_LINES[2].coins.append(Coin( 51, 183, 'progress'))
+MAP_LINES[2].coins.append(Coin( 900, 700, 'progress'))
 MAP_LINES[3].coins.append(Coin(843, 125, 'progress'))
 MAP_LINES[3].coins.append(Coin(411, 170, 'progress'))
 MAP_LINES[4].coins.append(Coin(137, 173, 'progress'))
